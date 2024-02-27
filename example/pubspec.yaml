@@ -13,7 +13,7 @@ dependencies:
     sdk: flutter
   cupertino_icons: ^1.0.3
   local_assets_server: ^2.0.2
-  webview_flutter: ^2.0.12
+  webview_flutter: ^4.4.1
   webview_jsbridge:
     path: ../
 

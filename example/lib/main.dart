@@ -26,6 +26,7 @@ class MyApp extends StatelessWidget {
 
 class HomeView extends StatefulWidget {
   final String title;
+
   HomeView(this.title) : super();
 
   @override
@@ -119,34 +120,36 @@ class _HomeViewState extends State<HomeView> {
     );
   }
 
-  WebView _buildWebView() {
+  WebViewWidget _buildWebView() {
     final isEs5 = widget.title == 'es5';
     final jsVersion =
         isEs5 ? WebViewInjectJsVersion.es5 : WebViewInjectJsVersion.es7;
     final htmlVersion = isEs5 ? 'default' : 'async';
-    return WebView(
-      javascriptChannels: jsBridge.jsChannels,
+    final jsChannel = jsBridge.jsChannel;
+    WebViewController controller = WebViewController()
+      ..addJavaScriptChannel(jsChannel.name,
+          onMessageReceived: jsChannel.onMessageReceived)
       // must enable js
-      javascriptMode: JavascriptMode.unrestricted,
-      onWebViewCreated: (controller) {
-        jsBridge.controller = controller;
-        jsBridge.defaultHandler = _defaultHandler;
-        jsBridge.registerHandler("NativeEcho", _nativeEchoHandler);
-      },
-      navigationDelegate: (NavigationRequest navigation) {
-        print('navigationDelegate ${navigation.url}');
-        // this is no effect on Android
-        if (navigation.url.contains('__bridge_loaded__')) {
+      ..setJavaScriptMode(JavaScriptMode.unrestricted)
+      ..setNavigationDelegate(NavigationDelegate(
+        onNavigationRequest: (request) {
+          print('navigationDelegate ${request.url}');
+          // this is no effect on Android
+          if (request.url.contains('__bridge_loaded__')) {
+            jsBridge.injectJs(esVersion: jsVersion);
+            return NavigationDecision.prevent;
+          }
+          return NavigationDecision.navigate;
+        },
+        onPageFinished: (url) {
           jsBridge.injectJs(esVersion: jsVersion);
-          return NavigationDecision.prevent;
-        }
-        return NavigationDecision.navigate;
-      },
-      onPageFinished: (String url) {
-        jsBridge.injectJs(esVersion: jsVersion);
-      },
-      initialUrl: 'http://$address:$port/$htmlVersion.html',
-    );
+        },
+      ))
+      ..loadRequest(Uri.parse('http://$address:$port/$htmlVersion.html'));
+    jsBridge.controller = controller;
+    jsBridge.defaultHandler = _defaultHandler;
+    jsBridge.registerHandler("NativeEcho", _nativeEchoHandler);
+    return WebViewWidget(controller: controller);
   }
 
   Future<void> _sendHello() async {

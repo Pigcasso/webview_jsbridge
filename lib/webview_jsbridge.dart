@@ -5,6 +5,7 @@ import 'dart:convert';
 
 import 'package:flutter/services.dart';
 import 'package:webview_flutter/webview_flutter.dart';
+import 'package:webview_jsbridge/src/js_channel_params.dart';
 
 typedef Future<T?> WebViewJSBridgeHandler<T extends Object?>(Object? data);
 
@@ -18,12 +19,10 @@ class WebViewJSBridge {
   final _handlers = <String, WebViewJSBridgeHandler>{};
   WebViewJSBridgeHandler? defaultHandler;
 
-  Set<JavascriptChannel> get jsChannels => <JavascriptChannel>{
-        JavascriptChannel(
-          name: 'YGFlutterJSBridgeChannel',
-          onMessageReceived: _onMessageReceived,
-        ),
-      };
+  JSChannelParams get jsChannel => JSChannelParams(
+        name: 'YGFlutterJSBridgeChannel',
+        onMessageReceived: _onMessageReceived,
+      );
 
   Future<void> injectJs(
       {WebViewInjectJsVersion esVersion = WebViewInjectJsVersion.es5}) async {
@@ -31,7 +30,7 @@ class WebViewJSBridge {
         esVersion == WebViewInjectJsVersion.es5 ? 'default' : 'async';
     final jsPath = 'packages/webview_jsbridge/assets/$jsVersion.js';
     final jsFile = await rootBundle.loadString(jsPath);
-    controller?.evaluateJavascript(jsFile);
+    controller?.runJavaScript(jsFile);
   }
 
   void registerHandler(String handlerName, WebViewJSBridgeHandler handler) {
@@ -42,7 +41,7 @@ class WebViewJSBridge {
     _handlers.remove(handlerName);
   }
 
-  void _onMessageReceived(JavascriptMessage message) {
+  void _onMessageReceived(JavaScriptMessage message) {
     final decodeStr = Uri.decodeFull(message.message);
     final jsonData = jsonDecode(decodeStr);
     final String type = jsonData['type'];
@@ -134,6 +133,6 @@ class WebViewJSBridge {
     final jsonStr = jsonEncode(jsonData);
     final encodeStr = Uri.encodeFull(jsonStr);
     final script = 'WebViewJavascriptBridge.nativeCall("$encodeStr")';
-    controller?.evaluateJavascript(script);
+    controller?.runJavaScript(script);
   }
 }
