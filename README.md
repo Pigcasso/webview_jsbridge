@@ -1,6 +1,6 @@
 # webview_jsbridge
 
-[中文文档](https://github.com/KouYiGuo/webview_jsbridge/blob/main/doc/README.zh_CN.md)
+[中文文档](https://github.com/Pigcasso/webview_jsbridge/blob/main/doc/README.zh_CN.md)
 
 A flutter jsbridge package compatible with [webview_flutter](https://github.com/flutter/plugins/tree/master/packages/webview_flutter/webview_flutter), no native dependence.
 
